@@ -6,12 +6,12 @@ import os
 
 
 class Playlist():
-    def __init__(self, playlist_uri):
-        self._playlist_uri = requests.utils.urlparse(playlist_uri)
-        self.base_uri = '{}/{}'.format(self._playlist_uri.hostname,
-                                       os.path.dirname(self._playlist_uri.path))
-        self.base_name = os.path.basename(self._playlist_uri.path).replace('.m3u8', '')
-        self.uri = self._playlist_uri.geturl()
+    def __init__(self, uri):
+        self._uri = requests.utils.urlparse(playlist_uri)
+        self.base_uri = '{}/{}'.format(self._uri.hostname,
+                                       os.path.dirname(self._uri.path))
+        self.base_name = os.path.basename(self._uri.path).replace('.m3u8', '')
+        self.uri = self._uri.geturl()
         try:
             resp = requests.get(self.uri)
         except Exception:
@@ -32,7 +32,7 @@ class Playlist():
                     response = yield from aiohttp.request('GET',
                                                           uri,
                                                           connector=connector)
-                except Exception as exc:
+                except Exception:
                     pass
                 else:
                     data = yield from response.read()
@@ -42,7 +42,12 @@ class Playlist():
 
     def _fetch(self, connector):
         semaphore = asyncio.Semaphore(10)
-        tasks = [asyncio.Task(self._fetch_segment(s, semaphore, connector)) for s in self._segments]
+        tasks = []
+        for segment in self._segments:
+            task = asyncio.Task(self._fetch_segment(segment,
+                                                    semaphore,
+                                                    connector))
+            tasks.append(task)
         return (yield from asyncio.gather(*tasks))
 
     def save(self, path=None):
@@ -51,7 +56,6 @@ class Playlist():
         loop = asyncio.get_event_loop()
         connector = aiohttp.TCPConnector(share_cookies=True, loop=loop)
         data = loop.run_until_complete(self._fetch(connector))
-        import ipdb; ipdb.set_trace()
         with open(path, 'wb') as f:
             for d in data:
                 f.write(d)
