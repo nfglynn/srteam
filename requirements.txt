@@ -1,0 +1,6 @@
+aiohttp==0.16.5
+chardet==2.3.0
+gnureadline==6.3.3
+iso8601==0.1.10
+m3u8==0.2.4
+requests==2.7.0
