@@ -55,3 +55,7 @@ docs/_build/
 
 # PyBuilder
 target/
+*.mp3
+*.mp4
+*.m3u8
+*~
