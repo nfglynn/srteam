@@ -17,15 +17,17 @@ Semaphore = Optional[asyncio.Semaphore]
 
 
 class Stream():
-    def __init__(self, uri: URI):
-        self._uri = requests.utils.urlparse(uri)
+    def __init__(self, episode: EpisodeInstance):
+        self._uri = requests.utils.urlparse(episode.uri)
         self.base_uri = '{}/{}'.format(self._uri.hostname,
                                        os.path.dirname(self._uri.path))
         self.base_name = os.path.basename(self._uri.path).replace('.m3u8', '')
         self.uri = self._uri.geturl()
         
-        self._save_dir = os.path.join(os.path.dirname(__file__), 'dl')
-        self.path = os.path.join(self._save_dir, self.base_name)
+        self.path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                 'programs',
+                                 episode.title,
+                                 self.base_name)
         try:
             resp = requests.get(self.uri)
         except Exception:
@@ -156,7 +158,7 @@ class Episode():
         return '<Episode {}>'.format(self)
 
     def download(self) -> Path:
-        stream = Stream(self.uri)
+        stream = Stream(self)
         return stream.save()
 
 
