@@ -23,6 +23,9 @@ class Stream():
                                        os.path.dirname(self._uri.path))
         self.base_name = os.path.basename(self._uri.path).replace('.m3u8', '')
         self.uri = self._uri.geturl()
+        
+        self._save_dir = os.path.join(os.path.dirname(__file__), 'dl')
+        self.path = os.path.join(self._save_dir, self.base_name)
         try:
             resp = requests.get(self.uri)
         except Exception:
@@ -35,6 +38,9 @@ class Stream():
             self._segments = self._stream.segments
             if not self._segments:
                 raise Exception("Bad stream - no segments")
+
+    def __repr__(self):
+        return "Srteam<{}>".format(self.base_name)
 
     def _fetch_segment(self,
                        segment: m3u8.Segment,
@@ -68,12 +74,20 @@ class Stream():
 
     def save(self, path: Optional[Path]=None) -> Path:
         if path is None:
-            path = os.path.join(os.getcwd(), self.base_name)
+            path = self.path
+
+        if os.path.isfile(path):
+            print('{} already saved locally at {}'.format(self, path))
+            return path
+
+        if not os.path.isdir(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
         loop = asyncio.get_event_loop()
         data = loop.run_until_complete(self._fetch())
         with open(path, 'wb') as f:
             for d in data:
                 f.write(d)
+        print('Saved {} to {}'.format(self, path))
         return path
 
 
